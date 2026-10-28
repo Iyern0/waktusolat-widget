@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="w_bg">#FF000000</color>
+    <color name="w_surface">#FF141414</color>
+    <color name="w_text">#FFFFFFFF</color>
+    <color name="w_muted">#FF888888</color>
+    <color name="w_dim">#FFAAAAAA</color>
+    <color name="w_gold">#FFFFD54F</color>
+    <color name="w_divider">#FF2A2A2A</color>
+    <color name="w_footer">#333333</color>
+</resources>
