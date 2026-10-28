@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Bahasa Melayu. Prayer names are identical in both locales (JAKIM uses them),
+         so only the surrounding UI text is translated. -->
+    <string name="widget_description">Waktu solat seterusnya, kiraan detik dan tarikh Hijrah</string>
+
+    <string name="label_tomorrow">esok</string>
+    <string name="widget_loading">Memuatkan…</string>
+    <string name="widget_tap_to_set">Ketik untuk tetapkan</string>
+    <string name="widget_no_data">Tiada data</string>
+    <string name="widget_offline">Luar talian</string>
+    <string name="widget_updated">dikemas kini %1$s</string>
+
+    <string name="countdown_in">dalam %1$s</string>
+    <string name="countdown_now">sekarang</string>
+    <string name="hero_tomorrow">%1$s · esok</string>
+    <string name="qibla_format">Kiblat %1$s %2$d°</string>
+
+    <string name="a11y_widget">Solat seterusnya %1$s pada %2$s, %3$s</string>
+    <string name="a11y_pill_next">%1$s %2$s, seterusnya</string>
+    <string name="a11y_pill">%1$s %2$s</string>
+    <string name="a11y_pill_passed">%1$s %2$s, sudah berlalu</string>
+
+    <string name="setup_location">Lokasi: %1$s</string>
+    <string name="setup_not_set">belum ditetapkan</string>
+    <string name="setup_use_gps">Guna lokasi GPS</string>
+    <string name="setup_locating">Mengesan lokasi…</string>
+    <string name="setup_denied">Kebenaran lokasi ditolak — pilih zon secara manual di bawah.</string>
+    <string name="setup_exact_warning">Alarm tepat dimatikan, jadi Android mengehadkan widget — kiraan detik boleh tersekat beberapa minit.</string>
+    <string name="setup_allow_exact">Benarkan alarm tepat</string>
+    <string name="setup_pick_zone">Atau pilih zon secara manual:</string>
+    <string name="setup_search_zone">Cari zon…</string>
+    <string name="setup_load_zones">Muat senarai zon</string>
+    <string name="setup_zones_failed">Tidak dapat memuat senarai zon. Semak internet.</string>
+    <string name="setup_refresh">Muat semula</string>
+    <string name="setup_notify">Notifikasi waktu solat</string>
+    <string name="setup_notify_hint">Beritahu apabila tiba waktu solat</string>
+    <string name="setup_last_error">Ralat terakhir: %1$s</string>
+    <string name="setup_no_error">Data terkini</string>
+    <string name="setup_tap_to_enable">Ketik untuk hidupkan</string>
+    <string name="setup_updated">dikemas kini %1$s</string>
+
+    <string name="notif_channel_name">Waktu solat</string>
+    <string name="notif_channel_desc">Beritahu anda apabila tiba waktu solat</string>
+    <string name="notif_title">%1$s %2$s</string>
+    <string name="notif_text">Sudah masuk waktu %1$s</string>
+</resources>

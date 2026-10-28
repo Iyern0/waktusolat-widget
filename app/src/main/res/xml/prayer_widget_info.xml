@@ -1,16 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- updatePeriodMillis = 30 min (the platform minimum). Updates are driven by the alarm
      chain, but this is a free system-driven recovery tick if an OEM battery manager kills
-     our alarms — onUpdate() re-arms the chain. -->
+     our alarms — onUpdate() re-arms the chain.
+
+     minHeight: the layout needs ~150dp (28dp padding, 12/34/13sp hero, divider, 34dp pills).
+     The old 110dp minimum clipped the pill row on a 2-row widget. -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:minWidth="250dp"
-    android:minHeight="110dp"
+    android:minHeight="150dp"
     android:targetCellWidth="4"
     android:targetCellHeight="2"
     android:minResizeWidth="180dp"
-    android:minResizeHeight="80dp"
+    android:minResizeHeight="110dp"
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen"
-    android:description="@string/app_name"
+    android:description="@string/widget_description"
+    android:previewLayout="@layout/widget_prayer"
     android:initialLayout="@layout/widget_prayer"
     android:updatePeriodMillis="1800000" />

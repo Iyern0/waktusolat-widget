@@ -9,3 +9,6 @@ captures/
 
 # plugin write-probe
 .scratch/.dsh-write-probe
+
+# council analysis artifacts (local only)
+.council/

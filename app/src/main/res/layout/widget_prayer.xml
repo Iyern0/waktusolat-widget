@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_bg"
@@ -33,6 +34,7 @@
                 android:textColor="#FFFFFF"
                 android:textSize="34sp"
                 android:textStyle="bold"
+                android:includeFontPadding="false"
                 android:layout_marginTop="-2dp" />
 
             <TextView
@@ -45,6 +47,7 @@
         </LinearLayout>
 
         <LinearLayout
+            android:id="@+id/info_column"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
@@ -55,30 +58,42 @@
                 android:id="@+id/tv_qibla"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="#BBBBBB"
+                android:textColor="#CCCCCC"
                 android:textSize="11sp" />
 
+            <!-- 4.5:1 on black; the old #555555 at 9sp was 2.8:1 and unreadable outdoors. -->
             <TextView
                 android:id="@+id/tv_zone"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="#555555"
-                android:textSize="9sp"
+                android:textColor="#AAAAAA"
+                android:textSize="11sp"
                 android:singleLine="true"
                 android:layout_marginTop="2dp" />
+
+            <TextView
+                android:id="@+id/tv_hijri"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#AAAAAA"
+                android:textSize="10sp"
+                android:singleLine="true"
+                android:layout_marginTop="1dp" />
         </LinearLayout>
     </LinearLayout>
 
     <!-- Divider -->
     <TextView
+        android:id="@+id/divider"
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="#222222"
+        android:background="#2A2A2A"
         android:layout_marginTop="8dp"
         android:layout_marginBottom="8dp" />
 
-    <!-- Pills: weight=1 so fewer pills = bigger pills -->
+    <!-- Pills: all five stay visible so the row never collapses after Isyak. -->
     <LinearLayout
+        android:id="@+id/pill_row"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
@@ -93,8 +108,8 @@
             android:textColor="#DDDDDD"
             android:textSize="11sp"
             android:textStyle="bold"
-            android:paddingStart="7dp"
-            android:paddingEnd="7dp"
+            android:paddingStart="5dp"
+            android:paddingEnd="5dp"
             android:paddingTop="8dp"
             android:paddingBottom="8dp"
             android:layout_marginEnd="3dp"
@@ -110,8 +125,8 @@
             android:textColor="#DDDDDD"
             android:textSize="11sp"
             android:textStyle="bold"
-            android:paddingStart="7dp"
-            android:paddingEnd="7dp"
+            android:paddingStart="5dp"
+            android:paddingEnd="5dp"
             android:paddingTop="8dp"
             android:paddingBottom="8dp"
             android:layout_marginEnd="3dp"
@@ -127,8 +142,8 @@
             android:textColor="#DDDDDD"
             android:textSize="11sp"
             android:textStyle="bold"
-            android:paddingStart="7dp"
-            android:paddingEnd="7dp"
+            android:paddingStart="5dp"
+            android:paddingEnd="5dp"
             android:paddingTop="8dp"
             android:paddingBottom="8dp"
             android:layout_marginEnd="3dp"
@@ -144,8 +159,8 @@
             android:textColor="#DDDDDD"
             android:textSize="11sp"
             android:textStyle="bold"
-            android:paddingStart="7dp"
-            android:paddingEnd="7dp"
+            android:paddingStart="5dp"
+            android:paddingEnd="5dp"
             android:paddingTop="8dp"
             android:paddingBottom="8dp"
             android:layout_marginEnd="3dp"
@@ -161,8 +176,8 @@
             android:textColor="#DDDDDD"
             android:textSize="11sp"
             android:textStyle="bold"
-            android:paddingStart="7dp"
-            android:paddingEnd="7dp"
+            android:paddingStart="5dp"
+            android:paddingEnd="5dp"
             android:paddingTop="8dp"
             android:paddingBottom="8dp"
             android:singleLine="true" />

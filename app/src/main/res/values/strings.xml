@@ -1,4 +1,70 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Waktu Solat</string>
+    <string name="widget_description">Next prayer time, countdown and Hijri date</string>
+
+    <!-- Prayer names: JAKIM's own Malay names, used for display only. The API keys
+         (Fajr/Dhuhr/Asr/Maghrib/Isha) stay internal. -->
+    <string name="prayer_fajr">Subuh</string>
+    <string name="prayer_dhuhr">Zohor</string>
+    <string name="prayer_asr">Asar</string>
+    <string name="prayer_maghrib">Maghrib</string>
+    <string name="prayer_isha">Isyak</string>
+
+    <string name="label_tomorrow">tomorrow</string>
+    <string name="widget_loading">Loading…</string>
+    <string name="widget_tap_to_set">Tap to set</string>
+    <string name="widget_no_data">No data</string>
+    <string name="widget_offline">Offline</string>
+    <string name="widget_updated">updated %1$s</string>
+    <string name="widget_placeholder_zone">Waktu Solat</string>
+
+    <string name="countdown_in">in %1$s</string>
+    <string name="countdown_now">now</string>
+    <string name="hero_tomorrow">%1$s · tomorrow</string>
+    <string name="qibla_format">Qibla %1$s %2$d°</string>
+
+    <string name="a11y_widget">Next prayer %1$s at %2$s, %3$s</string>
+    <string name="a11y_pill_next">%1$s %2$s, next</string>
+    <string name="a11y_pill">%1$s %2$s</string>
+    <string name="a11y_pill_passed">%1$s %2$s, passed</string>
+
+    <string name="setup_location">Location: %1$s</string>
+    <string name="setup_not_set">not set</string>
+    <string name="setup_use_gps">Use GPS location</string>
+    <string name="setup_locating">Locating…</string>
+    <string name="setup_denied">Location permission denied — pick a zone manually below.</string>
+    <string name="setup_exact_warning">Exact alarms are off, so Android throttles the widget — the countdown can freeze for minutes.</string>
+    <string name="setup_allow_exact">Allow exact alarms</string>
+    <string name="setup_pick_zone">Or pick a zone manually:</string>
+    <string name="setup_search_zone">Search zone…</string>
+    <string name="setup_load_zones">Load zone list</string>
+    <string name="setup_zones_failed">Could not load zone list. Check internet.</string>
+    <string name="setup_refresh">Refresh now</string>
+    <string name="setup_notify">Prayer notifications</string>
+    <string name="setup_notify_hint">Notify when each prayer time arrives</string>
+    <string name="setup_last_error">Last error: %1$s</string>
+    <string name="setup_no_error">Data up to date</string>
+    <string name="setup_tap_to_enable">Tap to enable</string>
+    <string name="setup_updated">updated %1$s</string>
+
+    <string name="notif_channel_name">Prayer times</string>
+    <string name="notif_channel_desc">Notifies you when a prayer time arrives</string>
+    <string name="notif_title">%1$s %2$s</string>
+    <string name="notif_text">It\'s time for %1$s</string>
+
+    <string-array name="hijri_months">
+        <item>Muharram</item>
+        <item>Safar</item>
+        <item>Rabiulawal</item>
+        <item>Rabiulakhir</item>
+        <item>Jamadilawal</item>
+        <item>Jamadilakhir</item>
+        <item>Rejab</item>
+        <item>Syaaban</item>
+        <item>Ramadan</item>
+        <item>Syawal</item>
+        <item>Zulkaedah</item>
+        <item>Zulhijjah</item>
+    </string-array>
 </resources>

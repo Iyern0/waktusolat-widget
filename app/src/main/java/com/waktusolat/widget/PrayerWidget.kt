@@ -6,24 +6,25 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.graphics.Color
+import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.RemoteViews
 import java.util.Calendar
+import java.util.Locale
 import java.util.TimeZone
-import kotlin.math.*
 
-private val MYT = TimeZone.getTimeZone("Asia/Kuala_Lumpur")
-private const val MECCA_LAT = 21.4225
-private const val MECCA_LON = 39.8262
+private val MYT: TimeZone = TimeZone.getTimeZone("Asia/Kuala_Lumpur")
 
+/**
+ * Widget provider. Rendering is delegated to [PrayerModel] (pure, unit-tested); this class only
+ * maps a [WidgetState] onto RemoteViews.
+ */
 class PrayerWidget : AppWidgetProvider() {
 
-    override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) {
-        // The system pings us at least every 30 min (updatePeriodMillis). Treat any system
-        // update as a chance to repair a dead alarm chain.
+    override fun onUpdate(context: Context, manager: AppWidgetManager, appWidgetIds: IntArray) {
         AlarmScheduler.ensureScheduled(context)
-        for (id in ids) updateOne(context, manager, id)
+        for (id in appWidgetIds) updateOne(context, manager, id)
     }
 
     override fun onEnabled(context: Context) {
@@ -31,162 +32,218 @@ class PrayerWidget : AppWidgetProvider() {
     }
 
     override fun onDisabled(context: Context) {
-        // Last widget removed — stop draining battery.
         AlarmScheduler.cancelAll(context)
     }
 
+    override fun onAppWidgetOptionsChanged(
+        context: Context,
+        manager: AppWidgetManager,
+        appWidgetId: Int,
+        newOptions: Bundle,
+    ) {
+        updateOne(context, manager, appWidgetId)
+    }
+
     companion object {
+        private const val TAG = "PrayerWidget"
+        private const val COMPACT_HEIGHT_DP = 120
+
         fun updateAll(context: Context) {
             val manager = AppWidgetManager.getInstance(context)
             val ids = manager.getAppWidgetIds(ComponentName(context, PrayerWidget::class.java))
-            for (id in ids) updateOne(context, manager, id)
+            for (id in ids) {
+                try {
+                    updateOne(context, manager, id)
+                } catch (e: Exception) {
+                    Log.w(TAG, "repaint failed for $id", e)
+                }
+            }
         }
 
         private fun updateOne(context: Context, manager: AppWidgetManager, id: Int) {
-            try {
-                val views = RemoteViews(context.packageName, R.layout.widget_prayer)
+            val rv = RemoteViews(context.packageName, R.layout.widget_prayer)
+            val open = PendingIntent.getActivity(
+                context,
+                0,
+                Intent(context, MainActivity::class.java),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
+            rv.setOnClickPendingIntent(R.id.widget_root, open)
+            rv.setOnClickPendingIntent(R.id.tv_next_name, open)
 
-                val intent = Intent(context, MainActivity::class.java)
-                val pi = PendingIntent.getActivity(context, 0, intent,
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-                views.setOnClickPendingIntent(R.id.tv_next_name, pi)
+            val zone = Prefs.zone(context)
+            val zoneLabel = Prefs.zoneName(context) ?: zone ?: context.getString(R.string.widget_placeholder_zone)
 
-                val nowSec = System.currentTimeMillis() / 1000
-                val cal = Calendar.getInstance(MYT)
-                val zone = Prefs.zone(context)
-
-                if (zone == null) {
-                    showPlaceholder(views, manager, id, "Waktu Solat", "Tap to set")
-                    return
-                }
-
-                // Only render data whose month/year matches "now". On the 1st of a month the
-                // cached JSON still holds last month's day 1, which would paint times that
-                // are already hours in the past ("stuck at in now").
-                val cachedYear = Prefs.monthYear(context)
-                val cachedMonth = Prefs.monthNum(context)
-                val monthIsCurrent = cachedYear == cal.get(Calendar.YEAR) &&
-                    cachedMonth == cal.get(Calendar.MONTH) + 1
-                val month = if (monthIsCurrent) {
-                    Prefs.monthJson(context)?.let { PrayerApi.parseMonth(it) }
-                } else null
-
-                val dayNum = cal.get(Calendar.DAY_OF_MONTH)
-                val today = month?.days?.get(dayNum)
-                val tomorrow = month?.days?.get(dayNum + 1)
-
-                if (today == null) {
-                    showPlaceholder(views, manager, id, "Waktu Solat", "Loading…")
-                    return
-                }
-
-                val prayers = listOf(
-                    Triple("Fajr", today.fajr, R.id.tv_fajr),
-                    Triple("Dhuhr", today.dhuhr, R.id.tv_dhuhr),
-                    Triple("Asr", today.asr, R.id.tv_asr),
-                    Triple("Maghrib", today.maghrib, R.id.tv_maghrib),
-                    Triple("Isha", today.isha, R.id.tv_isha),
+            if (zone == null) {
+                showPlaceholder(
+                    context, rv,
+                    hero = context.getString(R.string.widget_placeholder_zone),
+                    note = context.getString(R.string.widget_tap_to_set),
                 )
+            } else {
+                render(context, rv, zone, zoneLabel)
+            }
 
-                val upcoming = prayers.firstOrNull { it.second > nowSec }
-                // After Isha there is no next prayer in today's data. Tomorrow's Fajr is only
-                // knowable once the next month's JSON arrives (after midnight) — never fall
-                // back to today's Fajr, which would render a past time with "in now".
-                val nextName = upcoming?.first ?: "Fajr"
-                val nextTime = upcoming?.second ?: tomorrow?.fajr
-                val nextPillId = upcoming?.third ?: R.id.tv_fajr
+            // Compact layouts (110dp min resize) cannot fit pills + info column.
+            val compact = manager.getAppWidgetOptions(id)
+                .getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT) < COMPACT_HEIGHT_DP
+            if (compact) {
+                rv.setViewVisibility(R.id.pill_row, View.GONE)
+                rv.setViewVisibility(R.id.info_column, View.GONE)
+                rv.setViewVisibility(R.id.divider, View.GONE)
+            }
 
-                // Hero
-                views.setTextViewText(R.id.tv_next_name, nextName.uppercase())
-                views.setTextViewText(R.id.tv_next_time, nextTime?.let { hm(it) } ?: "--:--")
-                views.setTextViewText(
-                    R.id.tv_countdown,
-                    when {
-                        nextTime == null -> "tomorrow"
-                        else -> "in " + countdown(nowSec, nextTime)
-                    },
+            manager.updateAppWidget(id, rv)
+        }
+
+        private fun render(context: Context, rv: RemoteViews, zone: String, zoneLabel: String) {
+            val raw = Prefs.monthJson(context)
+            val month = raw?.let { PrayerApi.parseMonth(it) }
+            val isCurrent = month != null &&
+                month.zone == zone &&
+                Prefs.monthYear(context) == month.year &&
+                Prefs.monthNum(context) == month.monthNum
+
+            val cal = Calendar.getInstance(MYT)
+            val dayNum = cal.get(Calendar.DAY_OF_MONTH)
+            val nowSec = System.currentTimeMillis() / 1_000
+
+            val today = if (isCurrent) month?.day(dayNum) else null
+            val tomorrow = if (isCurrent) {
+                month?.day(dayNum + 1) ?: nextMonthFirstDay(context, zone)
+            } else {
+                null
+            }
+
+            val state = today?.let {
+                PrayerModel.build(
+                    nowSec = nowSec,
+                    today = it,
+                    tomorrow = tomorrow,
+                    zoneLabel = zoneLabel,
+                    hijri = it.hijri,
+                    hijriMonths = context.resources.getStringArray(R.array.hijri_months).toList(),
+                    lat = Prefs.lat(context) ?: ZoneGeo.coordsFor(zone).first,
+                    lon = Prefs.lon(context) ?: ZoneGeo.coordsFor(zone).second,
+                    staleNote = null,
                 )
+            }
 
-                // Remaining prayers as pills — wrap_content so no truncation
-                val remaining = prayers.filter { it.second > nowSec }
-                val allPillIds = listOf(R.id.tv_fajr, R.id.tv_dhuhr, R.id.tv_asr, R.id.tv_maghrib, R.id.tv_isha)
+            if (state == null) {
+                showPlaceholder(context, rv, context.getString(R.string.widget_placeholder_zone), placeholderNote(context))
+                return
+            }
 
-                for (pid in allPillIds) views.setViewVisibility(pid, View.GONE)
+            val heroName = name(context, state.nextKey)
+            rv.setTextViewText(
+                R.id.tv_next_name,
+                if (state.isTomorrow) context.getString(R.string.hero_tomorrow, heroName) else heroName,
+            )
+            rv.setTextViewText(
+                R.id.tv_next_time,
+                state.nextTimeSec?.let { PrayerModel.hm(it) } ?: "--:--",
+            )
+            rv.setTextViewText(
+                R.id.tv_countdown,
+                state.countdownText?.let { context.getString(R.string.countdown_in, it) } ?: "",
+            )
 
-                for ((_, time, viewId) in remaining) {
-                    val isNext = viewId == nextPillId
-                    views.setViewVisibility(viewId, View.VISIBLE)
-                    views.setTextViewText(viewId, hm(time))
-                    val textColor = if (isNext) Color.parseColor("#FFD54F") else Color.parseColor("#DDDDDD")
-                    views.setTextColor(viewId, textColor)
+            renderPills(context, rv, state.pills)
+            rv.setViewVisibility(R.id.pill_row, View.VISIBLE)
+            rv.setViewVisibility(R.id.divider, View.VISIBLE)
+            rv.setViewVisibility(R.id.info_column, View.VISIBLE)
+
+            rv.setTextViewText(R.id.tv_zone, state.zoneLabel)
+            rv.setTextViewText(
+                R.id.tv_qibla,
+                context.getString(R.string.qibla_format, state.qiblaArrow, state.qiblaDegrees),
+            )
+            if (state.hijriLabel != null) {
+                rv.setTextViewText(R.id.tv_hijri, state.hijriLabel)
+                rv.setViewVisibility(R.id.tv_hijri, View.VISIBLE)
+            } else {
+                rv.setViewVisibility(R.id.tv_hijri, View.GONE)
+            }
+
+            val time = state.nextTimeSec?.let { PrayerModel.hm(it) } ?: ""
+            rv.setContentDescription(
+                R.id.widget_root,
+                context.getString(R.string.a11y_widget, heroName, time, state.countdownText ?: ""),
+            )
+        }
+
+        private fun renderPills(context: Context, rv: RemoteViews, pills: List<Pill>) {
+            val ids = intArrayOf(
+                R.id.tv_fajr, R.id.tv_dhuhr, R.id.tv_asr, R.id.tv_maghrib, R.id.tv_isha,
+            )
+            pills.forEachIndexed { index, pill ->
+                val id = ids[index]
+                val name = name(context, pill.key)
+                rv.setTextViewText(id, name)
+                rv.setViewVisibility(id, View.VISIBLE)
+
+                val (bg, fg) = when (pill.state) {
+                    PillState.PASSED -> R.drawable.pill_passed to 0xFF808080.toInt()
+                    PillState.NEXT -> R.drawable.pill_next to 0xFF1A1A1A.toInt()
+                    PillState.FUTURE -> R.drawable.pill_normal to 0xFFDDDDDD.toInt()
                 }
+                rv.setInt(id, "setBackgroundResource", bg)
+                rv.setTextColor(id, fg)
 
-                // Qibla
-                val bearing = qiblaBearing(3.139, 101.6869)
-                views.setTextViewText(R.id.tv_qibla, "Qibla ${qiblaArrow(bearing)} ${bearing}°")
-                views.setTextViewText(R.id.tv_zone, Prefs.zoneName(context) ?: zone)
-
-                manager.updateAppWidget(id, views)
-            } catch (e: Exception) {
-                android.util.Log.e("PrayerWidget", "update failed", e)
+                val label = PrayerModel.hm(pill.timeSec)
+                val a11y = when (pill.state) {
+                    PillState.PASSED -> context.getString(R.string.a11y_pill_passed, name, label)
+                    PillState.NEXT -> context.getString(R.string.a11y_pill_next, name, label)
+                    PillState.FUTURE -> context.getString(R.string.a11y_pill, name, label)
+                }
+                rv.setContentDescription(id, a11y)
             }
         }
 
-        private fun showPlaceholder(
-            views: RemoteViews,
-            manager: AppWidgetManager,
-            id: Int,
-            title: String,
-            subtitle: String,
-        ) {
-            views.setTextViewText(R.id.tv_next_name, title)
-            views.setTextViewText(R.id.tv_next_time, subtitle)
-            views.setTextViewText(R.id.tv_countdown, "")
-            views.setViewVisibility(R.id.tv_qibla, View.GONE)
-            views.setTextViewText(R.id.tv_zone, "")
-            hidePills(views)
-            manager.updateAppWidget(id, views)
+        private fun showPlaceholder(context: Context, rv: RemoteViews, hero: String, note: String) {
+            rv.setTextViewText(R.id.tv_next_name, hero)
+            rv.setTextViewText(R.id.tv_next_time, "")
+            rv.setTextViewText(R.id.tv_countdown, note)
+            rv.setViewVisibility(R.id.pill_row, View.GONE)
+            rv.setViewVisibility(R.id.divider, View.GONE)
+            rv.setViewVisibility(R.id.info_column, View.GONE)
+            rv.setContentDescription(R.id.widget_root, "$hero $note")
         }
 
-        private fun hidePills(views: RemoteViews) {
-            for (id in listOf(R.id.tv_fajr, R.id.tv_dhuhr, R.id.tv_asr,
-                R.id.tv_maghrib, R.id.tv_isha)) {
-                views.setViewVisibility(id, View.GONE)
+        /** Tells the user why there is nothing to show, with the cache age when known. */
+        private fun placeholderNote(context: Context): String {
+            val error = Prefs.lastError(context)
+            if (error == null) return context.getString(R.string.widget_loading)
+            val prefix = if (error == "offline") {
+                context.getString(R.string.widget_offline)
+            } else {
+                context.getString(R.string.widget_no_data)
+            }
+            val updated = Prefs.lastSuccessMs(context)
+            return if (updated > 0) {
+                val date = PrayerModel.shortDate(updated, Locale.getDefault())
+                "$prefix · ${context.getString(R.string.widget_updated, date)}"
+            } else {
+                prefix
             }
         }
 
-        private fun qiblaBearing(lat: Double, lon: Double): Int {
-            val lat1 = Math.toRadians(lat); val lon1 = Math.toRadians(lon)
-            val lat2 = Math.toRadians(MECCA_LAT); val lon2 = Math.toRadians(MECCA_LON)
-            val dLon = lon2 - lon1
-            val y = sin(dLon) * cos(lat2)
-            val x = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(dLon)
-            var brng = Math.toDegrees(atan2(y, x)).toInt()
-            if (brng < 0) brng += 360
-            return brng
+        /** Tomorrow's Fajr from the prefetched next month, when today is the month's last day. */
+        private fun nextMonthFirstDay(context: Context, zone: String): DayTimes? {
+            val raw = Prefs.nextJson(context) ?: return null
+            if (Prefs.nextZone(context) != zone) return null
+            val month = PrayerApi.parseMonth(raw) ?: return null
+            return month.day(1)
         }
 
-        private fun qiblaArrow(bearing: Int): String = when (bearing) {
-            in 338..360, in 0..22 -> "↑"
-            in 23..67 -> "↗"
-            in 68..112 -> "→"
-            in 113..157 -> "↘"
-            in 158..202 -> "↓"
-            in 203..247 -> "↙"
-            in 248..292 -> "←"
-            in 293..337 -> "↖"
-            else -> "↖"
-        }
-
-        private fun hm(epochSec: Long): String {
-            val c = Calendar.getInstance(MYT).apply { timeInMillis = epochSec * 1000 }
-            return "%d:%02d".format(c.get(Calendar.HOUR_OF_DAY), c.get(Calendar.MINUTE))
-        }
-
-        private fun countdown(nowSec: Long, targetSec: Long): String {
-            var s = targetSec - nowSec; if (s < 0) s = 0
-            val h = s / 3600; val m = (s % 3600) / 60
-            return when { h > 0 -> "${h}h ${m}m"; m > 0 -> "${m} min"; else -> "now" }
-        }
+        private fun name(context: Context, key: PrayerKey): String = context.getString(
+            when (key) {
+                PrayerKey.FAJR -> R.string.prayer_fajr
+                PrayerKey.DHUHR -> R.string.prayer_dhuhr
+                PrayerKey.ASR -> R.string.prayer_asr
+                PrayerKey.MAGHRIB -> R.string.prayer_maghrib
+                PrayerKey.ISHA -> R.string.prayer_isha
+            }
+        )
     }
 }
