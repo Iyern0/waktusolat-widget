@@ -4,7 +4,7 @@
 
 ### Issue tracker
 
-Local markdown: issues and specs live as files under `.scratch/<feature-slug>/` in this repo. See `docs/agents/issue-tracker.md`.
+GitHub issues in `Iyern0/waktusolat-widget`, via the `gh` CLI. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
