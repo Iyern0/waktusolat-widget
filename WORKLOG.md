@@ -7,7 +7,7 @@
 **Status:** ✅ confirmed
 
 ### 2026-10-28 23:19 — Widget stale-refresh: diagnosed two root causes, fixed alarm chain + stale-month render
-**What happened:** User reported the Waktu Solat widget sometimes freezes at a time / stops advancing. Read every Kotlin file in `C:\Users\kiifu\Desktop\claude\waktusolat-widget`; found two independent causes and fixed both.
+**What happened:** User reported the Waktu Solat widget sometimes freezes at a time / stops advancing. Read every Kotlin file in the widget project; found two independent causes and fixed both.
 **Found / changed:**
 1. **Exact-alarm permission never requested.** `MainActivity` declared `SCHEDULE_EXACT_ALARM` in the manifest but never asked for the grant. On Android 12+ `canScheduleExactAlarms()` is therefore false for this targetSdk-35 app, so `AlarmScheduler` fell back to `setAndAllowWhileIdle` — inexact and, in Doze, limited to roughly one fire per 9 minutes. The minute chain then lags by many minutes, which is exactly "stuck at a certain time". Fixed: `MainActivity` now shows an "Allow exact alarms" card and opens `Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM`, then re-arms on `onResume` when the grant arrives.
 2. **Stale cached month rendered as current.** `PrayerWidget.updateOne` read `Prefs.monthJson` without checking `monthYear`/`monthNum` against today, and the day map always contains day 1..N. On the 1st of a month (or after any failed monthly fetch) it painted the *previous* month's times, all in the past, so the hero showed an old time with countdown "in now" and stayed there while offline. Fixed: render only when the cached month matches the current year+month; otherwise show "Loading…" and let the existing stale check refetch.
@@ -18,7 +18,13 @@
 **Status:** ✅ confirmed (compile) · ⚠️ provisional (device behaviour)
 
 ### 2026-10-28 23:31 — Moved app into workspace, created GitHub repo, switched tracker backend to GitHub
-**What happened:** Per the user's choice (move the app into this workspace), copied the widget project into `C:\Users\kiifu\Desktop\app clone`, initialised git, created `Iyern0/waktusolat-widget` (private), pushed `main`, created the 10 canonical labels, and switched the deck backend from markdown to github.
+**What happened:** Per the user's choice (move the app into this workspace), copied the widget project into this workspace (`app clone`), initialised git, created `Iyern0/waktusolat-widget` (private), pushed `main`, created the 10 canonical labels, and switched the deck backend from markdown to github.
 **Found / changed:** Copy excluded `.gradle/`, `.kotlin/`, `.idea/`, `app/build/`, `local.properties` (gitignored; copied in for local builds). Git identity set locally as `Iyern0 <Iyern0@users.noreply.github.com>` because no global identity was configured. Labels created with the exact canonical colours/descriptions (bug d73a4a, needs-triage fbca04, needs-info 5319e7, ready-for-agent 0e8a16, ready-for-human b60205, wayfinder:{grilling 9D7CD8, map 8b5cf6, prototype f59e0b, research 0ea5e9, task 10b981}). `docs/agents/workspace.yaml` backendId → `github` (pickedAt 1793201268516); `docs/agents/issue-tracker.md` rewritten from the GitHub template (PRs-as-requests: no); `AGENTS.md` Issue tracker line now names the GitHub repo.
 **Artefacts:** `.git/`, `https://github.com/Iyern0/waktusolat-widget`, `docs/agents/issue-tracker.md`, `docs/agents/workspace.yaml`, `AGENTS.md`.
+**Status:** ✅ confirmed
+
+### 2026-10-28 23:40 — Redacted local paths, added README, prepared repo for public visibility
+**What happened:** Before flipping the repo to public, scanned the tree and the full commit history for secret material and personal data.
+**Found / changed:** Nothing sensitive is tracked: no keys, tokens, keystores, `local.properties`, `.idea/` or build output; the pattern scan over every tracked file returned no matches, and the earlier write-probe file never entered history. Git author is the noreply address `Iyern0@users.noreply.github.com`, and the remote URL carries no embedded token. The only personal data was two absolute `C:\Users\...` paths inside earlier entries; both now read as relative descriptions. Added a short `README.md` (what the widget does, how to build, how to install) so the public repo has a landing page.
+**Artefacts:** `WORKLOG.md`, `README.md`.
 **Status:** ✅ confirmed
